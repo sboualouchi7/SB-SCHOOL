@@ -1,0 +1,1086 @@
+// First, let's create the model classes based on the class diagram with single table inheritance
+
+// Enums
+package com.education.model.enums;
+
+public enum Sexe {
+    MASCULIN, FEMININ
+}
+
+package com.education.model.enums;
+
+public enum Role {
+    ADMIN, ENSEIGNANT, ETUDIANT, PARENT
+}
+
+package com.education.model.enums;
+
+public enum TypeModule {
+    M, C, D
+}
+
+package com.education.model.enums;
+
+public enum TypeDocument {
+    ATTESTATION, SCOLARITE, CERTIFICAT, PRESENCE, RELEVE_NOTES, AUTRE
+}
+
+package com.education.model.enums;
+
+public enum StatusDocument {
+    DEMANDE, EN_TRAITEMENT, PRET, ARCHIVE
+}
+
+package com.education.model.enums;
+
+public enum StatusSeance {
+    PLANIFIEE, APPROUVEE, REALISEE, ANNULEE
+}
+
+package com.education.model.enums;
+
+public enum NumeroSeance {
+    S1, S2, S3, S4, S5
+}
+
+package com.education.model.enums;
+
+public enum TypeEvaluation {
+    EXAMEN, CONTROLE, EXPOSE, PRESENTATION, PROJET
+}
+
+// Model classes
+package com.education.model;
+
+import com.education.model.enums.Role;
+import com.education.model.enums.Sexe;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.util.Date;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "user_type")
+public class Utilisateur {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String nom;
+    private String prenom;
+    private String email;
+    private String telephone;
+    private String dateNaissance;
+    private String adresse;
+    private String username;
+    private String password;
+
+    @Lob
+    private byte[] photo;
+
+    private boolean actifAccount;
+
+    @Enumerated(EnumType.STRING)
+    private Sexe sexe;
+
+    @Enumerated(EnumType.STRING)
+    private Role role;
+}
+
+package com.education.model;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
+@Data
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@DiscriminatorValue("ADMIN")
+public class Admin extends Utilisateur {
+    // Admin-specific methods would go here in accordance with the diagram
+}
+
+package com.education.model;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import java.util.List;
+
+@Data
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@DiscriminatorValue("ENSEIGNANT")
+public class Enseignant extends Utilisateur {
+    private String numeroCarte;
+
+    @OneToMany(mappedBy = "enseignant")
+    private List<Evaluation> evaluations;
+
+    @ManyToMany
+    @JoinTable(
+        name = "enseignant_module",
+        joinColumns = @JoinColumn(name = "enseignant_id"),
+        inverseJoinColumns = @JoinColumn(name = "module_id")
+    )
+    private List<Module> modules;
+}
+
+package com.education.model;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import java.util.List;
+
+@Data
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@DiscriminatorValue("PARENT")
+public class Parent extends Utilisateur {
+    @OneToMany(mappedBy = "parent")
+    private List<Etudiant> enfants;
+}
+////////////////////////////////////////////////////////////////////////
+package com.education.model;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import java.util.Date;
+import java.util.List;
+
+@Data
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@DiscriminatorValue("ETUDIANT")
+public class Etudiant extends Utilisateur {
+    private Date dateInscription;
+    private String filiere;
+
+    @ManyToOne
+    @JoinColumn(name = "classe_id")
+    private Classe classe;
+
+    @ManyToOne
+    @JoinColumn(name = "parent_id")
+    private Parent parent;
+
+    @OneToMany(mappedBy = "etudiant")
+    private List<Evaluation> evaluations;
+
+    @OneToMany(mappedBy = "etudiant")
+    private List<Document> documents;
+
+    @OneToMany(mappedBy = "etudiant")
+    private List<Absence> absences;
+
+    @ManyToMany
+    @JoinTable(
+        name = "etudiant_seance",
+        joinColumns = @JoinColumn(name = "etudiant_id"),
+        inverseJoinColumns = @JoinColumn(name = "seance_id")
+    )
+    private List<Seance> seances;
+}
+--------------------------------------------------------------------
+package com.education.model;
+
+import com.education.model.enums.TypeModule;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.util.List;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+public class Module {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String libelle;
+    private int volumeHoraire;
+    private int seuil;
+    private float coefficient;
+
+    @Enumerated(EnumType.STRING)
+    private TypeModule typeModule;
+
+    @ManyToMany(mappedBy = "modules")
+    private List<Enseignant> enseignants;
+
+    @OneToMany(mappedBy = "module")
+    private List<Evaluation> evaluations;
+
+    @ManyToOne
+    @JoinColumn(name = "classe_id")
+    private Classe classe;
+}
+---------------------------------------------------************
+package com.education.model;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.util.List;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+public class Classe {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String nom;
+
+    @OneToMany(mappedBy = "classe")
+    private List<Module> modules;
+
+    @OneToMany(mappedBy = "classe")
+    private List<Etudiant> etudiants;
+
+    @ManyToOne
+    @JoinColumn(name = "niveau_id")
+    private Niveau niveau;
+}
+////////////////////////////////////////////////****/////////////////////////////****/////////////////
+package com.education.model;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.util.List;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+public class Niveau {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String label;
+
+    @OneToMany(mappedBy = "niveau")
+    private List<Classe> classes;
+}
+
+package com.education.model;
+
+import com.education.model.enums.StatusSeance;
+import com.education.model.enums.NumeroSeance;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.util.Date;
+import java.util.List;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+public class Seance {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "module_id")
+    private Module module;
+
+    private Date date;
+
+    @Enumerated(EnumType.STRING)
+    private NumeroSeance numeroSeance;
+
+    @Enumerated(EnumType.STRING)
+    private StatusSeance status;
+
+    @ManyToMany(mappedBy = "seances")
+    private List<Etudiant> etudiants;
+}
+-------------------------------------------------------------------------------*******-----------**-----------------*******
+package com.education.model;
+
+import com.education.model.enums.TypeEvaluation;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.util.Date;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+public class Evaluation {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "etudiant_id")
+    private Etudiant etudiant;
+
+    @ManyToOne
+    @JoinColumn(name = "module_id")
+    private Module module;
+
+    @ManyToOne
+    @JoinColumn(name = "enseignant_id")
+    private Enseignant enseignant;
+
+    @Enumerated(EnumType.STRING)
+    private TypeEvaluation type;
+
+    private float note;
+    private Date dateEvaluation;
+}
+////////////////////////////////////////////**********************
+package com.education.model;
+
+import com.education.model.enums.TypeDocument;
+import com.education.model.enums.StatusDocument;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.util.Date;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+public class Document {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "etudiant_id")
+    private Etudiant etudiant;
+
+    private Date dateCreation;
+    private String fichierUrl;
+
+    @Enumerated(EnumType.STRING)
+    private StatusDocument status;
+
+    @Enumerated(EnumType.STRING)
+    private TypeDocument type;
+}
+/////////////////////////////////////////////////////////////////***************************************************////
+package com.education.model;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.util.Date;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+public class Absence {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "etudiant_id")
+    private Etudiant etudiant;
+
+    private Date dateDebut;
+    private Date dateFin;
+    private String motif;
+
+    @Lob
+    private byte[] justification;
+}
+
+// DTOs
+package com.education.dto;
+
+import com.education.model.enums.Role;
+import com.education.model.enums.Sexe;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class UtilisateurDTO {
+    private Long id;
+    private String nom;
+    private String prenom;
+    private String email;
+    private String telephone;
+    private String dateNaissance;
+    private String adresse;
+    private String username;
+    private String password;
+    private boolean actifAccount;
+    private Sexe sexe;
+    private Role role;
+}
+
+package com.education.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
+@Data
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@AllArgsConstructor
+public class AdminDTO extends UtilisateurDTO {
+    // Admin-specific fields if needed
+}
+
+package com.education.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import java.util.List;
+
+@Data
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@AllArgsConstructor
+public class EnseignantDTO extends UtilisateurDTO {
+    private String numeroCarte;
+    private List<Long> moduleIds;
+}
+
+package com.education.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import java.util.List;
+
+@Data
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@AllArgsConstructor
+public class ParentDTO extends UtilisateurDTO {
+    private List<Long> enfantIds;
+}
+
+package com.education.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import java.util.Date;
+import java.util.List;
+
+@Data
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@AllArgsConstructor
+public class EtudiantDTO extends UtilisateurDTO {
+    private Date dateInscription;
+    private String filiere;
+    private Long classeId;
+    private Long parentId;
+}
+
+package com.education.dto;
+
+import com.education.model.enums.TypeModule;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ModuleDTO {
+    private Long id;
+    private String libelle;
+    private int volumeHoraire;
+    private int seuil;
+    private float coefficient;
+    private TypeModule typeModule;
+    private Long classeId;
+}
+
+package com.education.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ClasseDTO {
+    private Long id;
+    private String nom;
+    private Long niveauId;
+}
+
+package com.education.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class NiveauDTO {
+    private Long id;
+    private String label;
+}
+
+package com.education.dto;
+
+import com.education.model.enums.NumeroSeance;
+import com.education.model.enums.StatusSeance;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.util.Date;
+import java.util.List;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class SeanceDTO {
+    private Long id;
+    private Long moduleId;
+    private Date date;
+    private NumeroSeance numeroSeance;
+    private StatusSeance status;
+    private List<Long> etudiantIds;
+}
+
+package com.education.dto;
+
+import com.education.model.enums.TypeEvaluation;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.util.Date;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class EvaluationDTO {
+    private Long id;
+    private Long etudiantId;
+    private Long moduleId;
+    private Long enseignantId;
+    private TypeEvaluation type;
+    private float note;
+    private Date dateEvaluation;
+}
+
+package com.education.dto;
+
+import com.education.model.enums.StatusDocument;
+import com.education.model.enums.TypeDocument;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.util.Date;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class DocumentDTO {
+    private Long id;
+    private Long etudiantId;
+    private Date dateCreation;
+    private String fichierUrl;
+    private StatusDocument status;
+    private TypeDocument type;
+}
+
+package com.education.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.util.Date;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class AbsenceDTO {
+    private Long id;
+    private Long etudiantId;
+    private Date dateDebut;
+    private Date dateFin;
+    private String motif;
+}
+
+// Repositories
+package com.education.repository;
+
+import com.education.model.Utilisateur;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.Optional;
+
+@Repository
+public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> {
+    Optional<Utilisateur> findByUsername(String username);
+    Optional<Utilisateur> findByEmail(String email);
+}
+
+package com.education.repository;
+
+import com.education.model.Admin;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface AdminRepository extends JpaRepository<Admin, Long> {
+}
+
+package com.education.repository;
+
+import com.education.model.Enseignant;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+
+@Repository
+public interface EnseignantRepository extends JpaRepository<Enseignant, Long> {
+    List<Enseignant> findByModulesId(Long moduleId);
+}
+
+package com.education.repository;
+
+import com.education.model.Parent;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface ParentRepository extends JpaRepository<Parent, Long> {
+}
+
+package com.education.repository;
+
+import com.education.model.Etudiant;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+
+@Repository
+public interface EtudiantRepository extends JpaRepository<Etudiant, Long> {
+    List<Etudiant> findByClasseId(Long classeId);
+    List<Etudiant> findByParentId(Long parentId);
+}
+
+package com.education.repository;
+
+import com.education.model.Module;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+
+@Repository
+public interface ModuleRepository extends JpaRepository<Module, Long> {
+    List<Module> findByClasseId(Long classeId);
+}
+
+package com.education.repository;
+
+import com.education.model.Classe;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+
+@Repository
+public interface ClasseRepository extends JpaRepository<Classe, Long> {
+    List<Classe> findByNiveauId(Long niveauId);
+}
+
+package com.education.repository;
+
+import com.education.model.Niveau;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface NiveauRepository extends JpaRepository<Niveau, Long> {
+}
+
+package com.education.repository;
+
+import com.education.model.Seance;
+import com.education.model.enums.StatusSeance;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.Date;
+import java.util.List;
+
+@Repository
+public interface SeanceRepository extends JpaRepository<Seance, Long> {
+    List<Seance> findByModuleId(Long moduleId);
+    List<Seance> findByEtudiantsId(Long etudiantId);
+    List<Seance> findByStatus(StatusSeance status);
+    List<Seance> findByDateBetween(Date debut, Date fin);
+}
+
+package com.education.repository;
+
+import com.education.model.Evaluation;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+
+@Repository
+public interface EvaluationRepository extends JpaRepository<Evaluation, Long> {
+    List<Evaluation> findByEtudiantId(Long etudiantId);
+    List<Evaluation> findByModuleId(Long moduleId);
+    List<Evaluation> findByEnseignantId(Long enseignantId);
+}
+
+package com.education.repository;
+
+import com.education.model.Document;
+import com.education.model.enums.StatusDocument;
+import com.education.model.enums.TypeDocument;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+
+@Repository
+public interface DocumentRepository extends JpaRepository<Document, Long> {
+    List<Document> findByEtudiantId(Long etudiantId);
+    List<Document> findByType(TypeDocument type);
+    List<Document> findByStatus(StatusDocument status);
+}
+
+package com.education.repository;
+
+import com.education.model.Absence;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.Date;
+import java.util.List;
+
+@Repository
+public interface AbsenceRepository extends JpaRepository<Absence, Long> {
+    List<Absence> findByEtudiantId(Long etudiantId);
+    List<Absence> findByDateDebutBetween(Date debut, Date fin);
+}
+
+// Mappers
+package com.education.mapper;
+
+import com.education.dto.UtilisateurDTO;
+import com.education.model.Utilisateur;
+import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
+import java.util.List;
+
+@Mapper(componentModel = "spring")
+public interface UtilisateurMapper {
+    UtilisateurDTO toDto(Utilisateur utilisateur);
+    Utilisateur toEntity(UtilisateurDTO utilisateurDTO);
+    List<UtilisateurDTO> toDtoList(List<Utilisateur> utilisateurs);
+    void updateEntityFromDto(UtilisateurDTO dto, @MappingTarget Utilisateur entity);
+}
+
+package com.education.mapper;
+
+import com.education.dto.AdminDTO;
+import com.education.model.Admin;
+import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
+import java.util.List;
+
+@Mapper(componentModel = "spring")
+public interface AdminMapper {
+    AdminDTO toDto(Admin admin);
+    Admin toEntity(AdminDTO adminDTO);
+    List<AdminDTO> toDtoList(List<Admin> admins);
+    void updateEntityFromDto(AdminDTO dto, @MappingTarget Admin entity);
+}
+
+package com.education.mapper;
+
+import com.education.dto.EnseignantDTO;
+import com.education.model.Enseignant;
+import com.education.model.Module;
+import com.education.repository.ModuleRepository;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
+import org.springframework.beans.factory.annotation.Autowired;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Mapper(componentModel = "spring")
+public abstract class EnseignantMapper {
+
+    @Autowired
+    protected ModuleRepository moduleRepository;
+
+    @Mapping(target = "moduleIds", source = "modules", qualifiedByName = "modulesToIds")
+    public abstract EnseignantDTO toDto(Enseignant enseignant);
+
+    @Mapping(target = "modules", source = "moduleIds", qualifiedByName = "idsToModules")
+    public abstract Enseignant toEntity(EnseignantDTO enseignantDTO);
+
+    public abstract List<EnseignantDTO> toDtoList(List<Enseignant> enseignants);
+
+    @Mapping(target = "modules", source = "moduleIds", qualifiedByName = "idsToModules")
+    public abstract void updateEntityFromDto(EnseignantDTO dto, @MappingTarget Enseignant entity);
+
+    @Named("modulesToIds")
+    protected List<Long> modulesToIds(List<Module> modules) {
+        if (modules == null) return null;
+        return modules.stream().map(Module::getId).collect(Collectors.toList());
+    }
+
+    @Named("idsToModules")
+    protected List<Module> idsToModules(List<Long> ids) {
+        if (ids == null) return null;
+        return ids.stream().map(id -> moduleRepository.findById(id).orElse(null))
+                .filter(module -> module != null)
+                .collect(Collectors.toList());
+    }
+}
+
+package com.education.mapper;
+
+import com.education.dto.ParentDTO;
+import com.education.model.Etudiant;
+import com.education.model.Parent;
+import com.education.repository.EtudiantRepository;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
+import org.springframework.beans.factory.annotation.Autowired;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Mapper(componentModel = "spring")
+public abstract class ParentMapper {
+
+    @Autowired
+    protected EtudiantRepository etudiantRepository;
+
+    @Mapping(target = "enfantIds", source = "enfants", qualifiedByName = "enfantsToIds")
+    public abstract ParentDTO toDto(Parent parent);
+
+    @Mapping(target = "enfants", source = "enfantIds", qualifiedByName = "idsToEnfants")
+    public abstract Parent toEntity(ParentDTO parentDTO);
+
+    public abstract List<ParentDTO> toDtoList(List<Parent> parents);
+
+    @Mapping(target = "enfants", source = "enfantIds", qualifiedByName = "idsToEnfants")
+    public abstract void updateEntityFromDto(ParentDTO dto, @MappingTarget Parent entity);
+
+    @Named("enfantsToIds")
+    protected List<Long> enfantsToIds(List<Etudiant> enfants) {
+        if (enfants == null) return null;
+        return enfants.stream().map(Etudiant::getId).collect(Collectors.toList());
+    }
+
+    @Named("idsToEnfants")
+    protected List<Etudiant> idsToEnfants(List<Long> ids) {
+        if (ids == null) return null;
+        return ids.stream().map(id -> etudiantRepository.findById(id).orElse(null))
+                .filter(etudiant -> etudiant != null)
+                .collect(Collectors.toList());
+    }
+}
+
+package com.education.mapper;
+
+import com.education.dto.EtudiantDTO;
+import com.education.model.Classe;
+import com.education.model.Etudiant;
+import com.education.model.Parent;
+import com.education.repository.ClasseRepository;
+import com.education.repository.ParentRepository;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
+import org.springframework.beans.factory.annotation.Autowired;
+import java.util.List;
+
+@Mapper(componentModel = "spring")
+public abstract class EtudiantMapper {
+
+    @Autowired
+    protected ClasseRepository classeRepository;
+
+    @Autowired
+    protected ParentRepository parentRepository;
+
+    @Mapping(target = "classeId", source = "classe.id")
+    @Mapping(target = "parentId", source = "parent.id")
+    public abstract EtudiantDTO toDto(Etudiant etudiant);
+
+    @Mapping(target = "classe", source = "classeId", qualifiedByName = "idToClasse")
+    @Mapping(target = "parent", source = "parentId", qualifiedByName = "idToParent")
+    @Mapping(target = "evaluations", ignore = true)
+    @Mapping(target = "documents", ignore = true)
+    @Mapping(target = "absences", ignore = true)
+    @Mapping(target = "seances", ignore = true)
+    public abstract Etudiant toEntity(EtudiantDTO etudiantDTO);
+
+    public abstract List<EtudiantDTO> toDtoList(List<Etudiant> etudiants);
+
+    @Mapping(target = "classe", source = "classeId", qualifiedByName = "idToClasse")
+    @Mapping(target = "parent", source = "parentId", qualifiedByName = "idToParent")
+    @Mapping(target = "evaluations", ignore = true)
+    @Mapping(target = "documents", ignore = true)
+    @Mapping(target = "absences", ignore = true)
+    @Mapping(target = "seances", ignore = true)
+    public abstract void updateEntityFromDto(EtudiantDTO dto, @MappingTarget Etudiant entity);
+
+    @Named("idToClasse")
+    protected Classe idToClasse(Long id) {
+        if (id == null) return null;
+        return classeRepository.findById(id).orElse(null);
+    }
+
+    @Named("idToParent")
+    protected Parent idToParent(Long id) {
+        if (id == null) return null;
+        return parentRepository.findById(id).orElse(null);
+    }
+}
+
+// Create similar mappers for other entities...
+
+// Services
+package com.education.service;
+
+import com.education.dto.UtilisateurDTO;
+import java.util.List;
+
+public interface UtilisateurService {
+    UtilisateurDTO findById(Long id);
+    List<UtilisateurDTO> findAll();
+    UtilisateurDTO create(UtilisateurDTO utilisateurDTO);
+    UtilisateurDTO update(Long id, UtilisateurDTO utilisateurDTO);
+    void delete(Long id);
+    UtilisateurDTO findByUsername(String username);
+}
+
+
+
+-------------------------
+
+package com.education.service.impl;
+
+import com.education.dto.UtilisateurDTO;
+import com.education.mapper.UtilisateurMapper;
+import com.education.model.Utilisateur;
+import com.education.repository.UtilisateurRepository;
+import com.education.service.UtilisateurService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.NoSuchElementException;
+
+@Service
+@Transactional
+public class UtilisateurServiceImpl implements UtilisateurService {
+
+    private final UtilisateurRepository utilisateurRepository;
+    private final UtilisateurMapper utilisateurMapper;
+
+    @Autowired
+    public UtilisateurServiceImpl(UtilisateurRepository utilisateurRepository, UtilisateurMapper utilisateurMapper) {
+        this.utilisateurRepository = utilisateurRepository;
+        this.utilisateurMapper = utilisateurMapper;
+    }
+
+    @Override
+    public UtilisateurDTO findById(Long id) {
+        Utilisateur utilisateur = utilisateurRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Utilisateur not found with id: " + id));
+        return utilisateurMapper.toDto(utilisateur);
+    }
+
+    @Override
+    public List<UtilisateurDTO> findAll() {
+        List<Utilisateur> utilisateurs = utilisateurRepository.findAll();
+        return utilisateurMapper.toDtoList(utilisateurs);
+    }
+
+    @Override
+    public UtilisateurDTO create(UtilisateurDTO utilisateurDTO) {
+        Utilisateur utilisateur = utilisateurMapper.toEntity(utilisateurDTO);
+        Utilisateur savedUtilisateur = utilisateurRepository.save(utilisateur);
+        return utilisateurMapper.toDto(savedUtilisateur);
+    }
+
+    @Override
+    public UtilisateurDTO update(Long id, UtilisateurDTO utilisateurDTO) {
+        Utilisateur existingUtilisateur = utilisateurRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Utilisateur not found with id: " + id));
+
+        utilisateurMapper.updateEntityFromDto(utilisateurDTO, existingUtilisateur);
+        Utilisateur updatedUtilisateur = utilisateurRepository.save(existingUtilisateur);
+        return utilisateurMapper.toDto(updatedUtilisateur);
+    }
+
+    @Override
+    public void delete(Long id) {
+        if (!utilisateurRepository.existsById(id)) {
+            throw new NoSuchElementException("Utilisateur not found with id: " + id);
+        }
+        utilisateurRepository.deleteById(id);
+    }
+
+    @Override
+    public UtilisateurDTO findByUsername(String username) {
+        Utilisateur utilisateur = utilisateurRepository.findByUsername(username)
+                .orElseThrow(() -> new NoSuchElementException("Utilisateur not found with username: " + username));
+        return utilisateurMapper.toDto(utilisateur);
+    }
+}
