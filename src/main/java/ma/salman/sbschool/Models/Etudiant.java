@@ -39,11 +39,5 @@ public class Etudiant extends Utilisateur{
         private List<Document> documents;
 
 
-        @ManyToMany
-        @JoinTable(
-                name = "etudiant_seance",
-                joinColumns = @JoinColumn(name = "etudiant_id"),
-                inverseJoinColumns = @JoinColumn(name = "seance_id")
-        )
-        private List<Seance> seances;
+
 }

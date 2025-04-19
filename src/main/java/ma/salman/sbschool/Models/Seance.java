@@ -30,7 +30,10 @@ public class Seance {
     @Enumerated(EnumType.STRING)
     private StatusSeance status;
 
-    @ManyToMany(mappedBy = "seances")
-    List<Etudiant> etudiants;
+    @ManyToOne
+    @JoinColumn(name = "enseignant_id")  // Colonne FK dans la table Seance
+    private Enseignant enseignant;
+
+
 
 }

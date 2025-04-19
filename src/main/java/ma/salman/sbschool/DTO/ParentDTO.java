@@ -5,7 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+
 import java.util.List;
 
 @Data
@@ -13,9 +13,5 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ParentDTO extends UtilisateurDTO{
-    private Date dateInscription;
-    private String filiere;
-    private Long classeId;
-    private Long parentId;
-    private List<Long> enfantIds;
+    private List<Long> etudiantIds;
 }

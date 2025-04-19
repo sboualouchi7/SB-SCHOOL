@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data @Entity
@@ -21,12 +22,10 @@ public class Enseignant extends Utilisateur{
     @OneToMany(mappedBy = "enseignant")
     private List<Evaluation> evaluations;
 
-    @ManyToMany
-    @JoinTable(
-            name = "enseignant_module",
-            joinColumns = @JoinColumn(name = "enseignant_id"),
-            inverseJoinColumns = @JoinColumn(name = "module_id")
-    )
-    private List<Module> modules;
+    @OneToMany(mappedBy = "enseignant") // Un enseignant a plusieurs modules
+    private List<Module> modules = new ArrayList<>();
+
+    @OneToMany(mappedBy = "enseignant")  // Un enseignant a plusieurs séances
+    private List<Seance> seances = new ArrayList<>();
 
 }

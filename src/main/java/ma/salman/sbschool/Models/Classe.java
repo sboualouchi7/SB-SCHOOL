@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -17,8 +18,13 @@ public class Classe {
     private Long id;
     private String nom;
 
-    @OneToMany(mappedBy = "classe")
-    private List<Module> modules;
+    @ManyToMany
+    @JoinTable(
+            name = "classe_module", // Nom de la table de jointure
+            joinColumns = @JoinColumn(name = "classe_id"), // Colonne pour cette entité (Classe)
+            inverseJoinColumns = @JoinColumn(name = "module_id") // Colonne pour l'autre entité (Module)
+    )
+    private List<Module> modules = new ArrayList<>();
 
     @OneToMany(mappedBy = "classe")
     private List<Etudiant> etudiants;
@@ -27,8 +33,7 @@ public class Classe {
     @JoinColumn(name = "niveau_id")
     private Niveau niveau;
 
-    @OneToMany(mappedBy = "classes")
-    private Collection<Module> module;
+
 
 
 }

@@ -6,7 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-@Entity @AllArgsConstructor
+@Entity
 @NoArgsConstructor
 @DiscriminatorValue("ADMIN")
 @EqualsAndHashCode(callSuper = true) //impoter equals() et hashcode()

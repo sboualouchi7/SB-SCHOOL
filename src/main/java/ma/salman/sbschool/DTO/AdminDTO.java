@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@NoArgsConstructor
-@AllArgsConstructor
+
 public class AdminDTO extends UtilisateurDTO{
 }

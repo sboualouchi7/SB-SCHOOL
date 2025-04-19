@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import ma.salman.sbschool.enums.TypeModule;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity @Data @AllArgsConstructor
@@ -22,12 +23,19 @@ public class Module {
     @Enumerated(EnumType.STRING)
     private TypeModule typeModule;
 
-    @ManyToMany(mappedBy = "modules")
-    private List<Evaluation> evaluations;
+    @ManyToMany(mappedBy = "modules") // Référence à l'attribut "modules" dans Classe
+    private List<Classe> classes = new ArrayList<>();
+    //@ManyToMany(mappedBy = "modules")
+    //private List<Evaluation> evaluations;
 
-    @OneToMany(mappedBy = "classe")
-    private List<Module> modules;
 
 
+    @ManyToOne // Relation Many-to-One vers Classe
+    @JoinColumn(name = "classe_id")
+    private Classe classe; // <-- Ajoutez
+
+    @ManyToOne // Un module n'a qu'un seul enseignant
+    @JoinColumn(name = "enseignant_id")
+    private Enseignant enseignant;
 
 }

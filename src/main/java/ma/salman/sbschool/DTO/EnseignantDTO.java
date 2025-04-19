@@ -13,4 +13,5 @@ import lombok.NoArgsConstructor;
 public class EnseignantDTO extends UtilisateurDTO{
     private String numeroCarte;
     private List<Long> moduleIds;
+    private List<SeanceDTO> seances;
 }

@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,4 +19,5 @@ public class ModuleDTO {
     private float coefficient;
     private TypeModule typeModule;
     private Long classeId;
+    private List<Long> classesIds;
 }

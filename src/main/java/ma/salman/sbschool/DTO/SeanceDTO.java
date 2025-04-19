@@ -18,5 +18,5 @@ public class SeanceDTO {
     private Date date;
     private NumeroSeance numeroSeance;
     private StatusSeance status;
-    private List<Long> etudiantIds;
+    private EnseignantDTO enseignantId;
 }

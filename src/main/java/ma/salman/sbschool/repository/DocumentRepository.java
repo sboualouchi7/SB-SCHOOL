@@ -10,7 +10,7 @@ import java.util.List;
 
 
 @Repository
-public interface DocumentRepository extends JpaRepository<Document, Integer> {
+public interface DocumentRepository extends JpaRepository<Document, Long> {
     List<Document> findByEtudiantId(Long etudiantId);
     List<Document> findByType(TypeDocument type);
     List<Document> findByStatus(StatusDocument status);
